@@ -1,4 +1,4 @@
-all: ptr ref enum complex mystring Cdocument fraction print new
+all: ptr ref enum complex mystring Cdocument fraction print new memory_using
 
 ptr:ptr.cpp
 	g++ -o ptr.out ptr.cpp
@@ -25,4 +25,7 @@ print: print.cpp
 	g++ -o print.out print.cpp
 
 new: new.cpp	
-	g++ -o new new.cpp
+	g++ -o new.out new.cpp
+
+memory_using: memory_using.cpp
+	g++ -o memory_using.out memory_using.cpp

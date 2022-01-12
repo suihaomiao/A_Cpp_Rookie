@@ -1,4 +1,4 @@
-all: ptr ref enum complex mystring Cdocument
+all: ptr ref enum complex mystring Cdocument fraction print new
 
 ptr:ptr.cpp
 	g++ -o ptr.out ptr.cpp
@@ -18,3 +18,11 @@ mystring:mystring.cpp
 Cdocument:Cdocument.cpp	
 	g++ -o cdocument.out Cdocument.cpp
 
+fraction: fraction.cpp
+	g++ -o fraction.out fraction.cpp
+
+print: print.cpp
+	g++ -o print.out print.cpp
+
+new: new.cpp	
+	g++ -o new new.cpp

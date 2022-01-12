@@ -78,6 +78,13 @@ inline complex& complex::add2(complex& ths, const complex& c2){
     //此时返回引用效率更高
 }
 ```
+pass by value和pass by reference，函数在声明时，形参并不能同时存在value形式和reference形式
+如果想要改变这个情况，可以选择在函数后加const（意味着，不改变成员变量的值），因为const是函数签名的一部分，而返回值不是。
+```C++
+//下面两个函数不能同时存在，因为这两个函数在编译器的函数签名相同
+double imag(const double& im){}
+double imag(const double im){}
+```
 
 总结：
 引用可以认为是变量的别名，改变引用就是改变其代表的变量；
@@ -195,10 +202,11 @@ struct默认区域是public
 
 
 ## C++的const关键字
-const
+const在C++中变得很复杂，const修饰指针，函数会发生不一样的效果。
 
-- const修饰成员函数，直接说结论：
+- const修饰成员函数，变成常量成员函数，直接说结论：
 const修饰成员函数后会告诉编译器该成员函数不会改变该类的数据。
+**补充：当成员函数的const和非const版本都同时存在时，const object只能调用const版本，non-const object只能调用non-const 版本。**
 
 
 ## C++的操作符重载
@@ -226,6 +234,46 @@ inline complex operator +(const complex& x, const complex& y){
 - 这种情况下**绝对不可以返回引用**，因为return返回的是一个临时变量，离开这个函数，变量会被释放，不能返回引用
 - return后面的构造函数形式，会创建一个临时变量，这是一个右值。返回后，会继续调用**拷贝函数**，然后该临时变量的声明周期仅能持续到接受对象的拷贝函数结束。
 
+### C++的转换函数
+转换函数放在操作符重载这一节，应为转换函数和操作符重载非常相似
+```C++
+//操作符重载
+complex operator+(const compldex& x);
+//转换函数，具体用法见fraction.cpp
+fraction::operator double() const;
+```
+可以，看出两者都是`operator`的重载，区别在以下几点：
+1. 转换函数不需要写，也不能写返回了类型，返回类型已经在函数名上了。
+2. 转换函数必须是类成员，不能是全局函数，因为转换的本体是类的实例，且编译器会帮我们隐式调用
+
+### C++的仿函数
+仿函数也放在操作符重载上，因为形式上仿函数和操作符重载很像
+```C++
+//操作符重载
+complex operator+(const compldex& x);
+//仿函数
+template <class T>
+struct idetity{
+    const T& 
+        operator()(const T& x)const {return x;}
+};
+```
+**仿函数就是实现了operator()的的类或者结构体。**即function-like classes，像函数的类。这种仿函数的作用是在STL算法的使用过程中，需要用到，例如：STL中的sort函数，可以对容器的元素进行排序，默认是升序排列；但是我们需要降序排列，可以通过传入一个仿函数，告诉sort函数来降序排列
+```C++
+class A{
+    bool operator(const int a, const int b)const {
+        return a<b;
+   }
+};
+int main(){
+    vector<int> x = {8,4,2,5,23,6,3};
+    //这里在sort传入的A，可以指定排序的规则
+    //实际上sort的原型是:template <class RandomAccessIterator, class Compare>
+    //void sort (RandomAccessIterator first, RandomAccessIterator last, Compare comp);
+    //第三个参数是传递一个比较规则，可以是函数指针，也可以是仿函数
+    sort(x.begin(), x.end(), A);
+}
+```
 
 ## C++的new和delete
 new会先分配内存，再调用构造函数
@@ -246,11 +294,16 @@ operator delete(ps);        //再把内存释放，内部调用的free
 ```
 **在new了数组后[],必须要用delete[ ]，才能完整释放数据的内存**
 
+重载new和delete，new和delete可以分解为几个步骤，我们可以重载operator new或者delete，也可以对表达式new和delete进行重载。
+重载new时，第一个参数一定要是size_t，delete的第一个参数需要是void*
+见new.cpp
+**new的重载很复杂，暂时没学明白，继续找资料学习**
+
 ## C++的继承
 Inheritance(继承)，表示is-a，即类A是类B，就可以说A是B的一种，即A is-a B
 继承的语法就不用说的太多了。
 注意，继承包含三种，public、private和protect
-public继承后，会继承所有成员变量和成员函数。
+public继承后，会继承所有的成员变量和成员函数，但是**private的**成员只能通过public的接口才能访问。
 private继承后，
 protect继承后，
 
@@ -267,7 +320,16 @@ protect继承后，
 具体例子见shape.cpp
 Template Method,父类的函数的流程中的某些步骤**声明成虚函数，延缓到子类去实现**，然后通过子类对象调用父类函数，父类函数中的关键步骤会根据调用的子类，来调用该子类的虚函数实现。
 虚函数的实现：
+C++的虚函数底层的代码实现是通过给类中加入一个指针(vptr)；指针会指向一个虚表（vtbl），虚表中存在的都是虚函数。虚表中存在这该类中的所有的虚函数，在调用时，会搜索该续表中指向的虚函数。
+虚函数的调用过程如下：(*(p->vptr)[n])(p);n表示在声明函数时，编译器会根据我们书写的顺序对虚函数进行编号。
 
+### C++动态绑定的三个条件
+- 指针调用
+    需要用指针调用函数
+- 虚函数
+    调用的函数还需要是虚函数
+- 指针作向上转型up-cast
+    这个不好理解，可以认为是父类指针指向子类对象。因为在类的设计图中父类一般画在上方，所以叫向上转型。
 
 
 ## C++的复合
@@ -284,12 +346,33 @@ composition（复合），表示has-a，即类A中有类B，就可以说A和B是
 Delegation（委托），Composition by reference ，表示类A中有类B的指针，就可以说A和B是委托关系。
 注：委托关系中的双方声明周期可能不一致，即可能类A消失了，但类B还存在。
 
-
-## C++的继承、复合和委托的多重关系
 习题：
 1、如果子类Derived继承自父类Base，其子类还有一个Component复合关系，构造函数和析构函数如何调用执行。
 2、如果父类有component的复合关系，子类继承自父类，构造函数和析构函数如何执行。
 
+## C++的namespace
+namespace是针对于工程开发中，可能会出现两个程序员声明了同一个变量，会产生编译错误。所以通过namespace包含变量和函数名，不同的namespace可以名称重复且编译器不会报错
 
+## C++的数量不定的模板参数
+C++允许使用数量不定的模板参数作为模板函数的输入，具体参考print.cpp
+
+## C++的auto
+auto会让编译器自动推断该变量的类型，因此，**auto必须要赋值**，否则只是声明变量，编译器不知道该怎么帮我们推断。
+
+## C++的this指针
+基于虚函数的多态情况下，理解this指针。
+在调用成员函数时，编译器会自动帮我们传入一个参数this指针：
+- 如果调用的是非虚函数，则是静态绑定，类的所有实例中的非虚函数都只存一份，所以指向的函数是固定的。
+- 如果调用的是虚函数，则是动态绑定，会根据传入的this指针的不同，调用不同的函数。见Cdocument.cpp：
+```C++
+    //创建子类对象
+    CMydoc openfile;
+    //通过子类对象调用父类函数，其中Serialize会调用子类实现的函数
+    openfile.OnFileOpen();
+```
+openfile是一个子类对象，虽然调用的是父类的OnFileOpen虚函数，但是传入的this指针是&openfile，所以会调用子类的函数。
+
+补充：
+static成员函数没有this指针，所以static成员函数不能访问类的非static数据。
 
 

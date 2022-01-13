@@ -118,7 +118,7 @@ static void set_rate(const double& x){m_rate = x;}
 double Account::m_rate = 8.0;
 ```
 
-## enum
+## C++的enum
 enum是一个枚举类型，其中每个元素均是整数，默认从0开始；当需要用到整数，但其值有具体含义时，可以用enum增加代码的可读性。
 在C++中enum可以定义在class中，这使得该enum称为该class命名空间的专属，即解决了C语言中enum枚举无法重复的痛点。
 具体用法，在./code/enum.cpp。enum在实际编程中，随处可见，用法必须掌握
@@ -358,6 +358,15 @@ C++允许使用数量不定的模板参数作为模板函数的输入，具体�
 
 ## C++的auto
 auto会让编译器自动推断该变量的类型，因此，**auto必须要赋值**，否则只是声明变量，编译器不知道该怎么帮我们推断。
+auto只使用在类型名称很复杂或者很长的情况下，这是强烈建议，auto还是要少用：
+```C++
+vector<int> v;
+auto pos = v.begin();//pos是vector<int>::iterator
+//这是个lambda表示式，这是个匿名函数，我们没法写出它的类型，所以，就用auto。
+auto func = [](int x)->bool{
+    ...
+}
+```
 
 ## C++的this指针
 基于虚函数的多态情况下，理解this指针。
@@ -374,5 +383,140 @@ openfile是一个子类对象，虽然调用的是父类的OnFileOpen虚函数�
 
 补充：
 static成员函数没有this指针，所以static成员函数不能访问类的非static数据。
+
+
+## C++的initializer lists
+C++的列表初始化，说到底就是用来赋初值.
+```C++
+int i;      //i的值不确定
+int j{};    //j的值=0；
+//大括号上会自动生成initiallizer_list<>的容器，然后对vector赋值
+vector<int> a{1,2,3,4,5,6,7,8,9,10};
+```
+实际上，有个列表初始化后，C++标准库的所有容器都会其写一个构造函数，该函数接受一个initializer_list，只要出现大括号的形式，会把大括号里面的东西自动生成一个initializer_list对象，然后传给构造函数。
+initializer_list非常特殊，可以接受任意个数，在实际的使用上确实也是，上述代码，还可以继续在{}里面增加或者删除元素。
+
+## C++的新forloop形式
+```C++
+// for( decl : coll)
+//  statement
+vector<int> a(100,0);
+for(int i : a)
+    cout << i <<  endl;
+```
+更方便的遍历容器，非常好用的语法。
+
+## C++的=default和=delete
+- =default
+在编译器在我们没有定义时，会默认帮我们生成的类成员函数有：默认构造函数、析构函数、拷贝构造函数和拷贝复制函数
+1. 构造函数：但是如果我们定义了构造函数（非默认），编译器不会帮我们生成默认的构造函数，但是我们还是想要那个默认的，可以加上=default，编译器会生成默认的版本；
+2. 析构函数：和构造函数同理，但是析构函数只应该有一个版本，所以自己写了析构函数再加上=default会报错。
+3. 拷贝构造函数：和构造函数同理，但是拷贝构造函数只应该有一个版本，所以自己写了拷贝构造函数再加上=default会报错。
+4. 拷贝复制函数：和构造函数同理，但是拷贝复制函数只应该有一个版本，所以自己写了拷贝复制函数再加上=default会报错。
+补充：=default在加到默认的构造函数时，可能会很有用，因为在继承时，子类的默认构造函数会由编译器自动帮我们调用父类的默认构造函数，在某些情况下，我们有默认构造函数会帮助我们省下很多事。
+
+- =delete
+这个是不允许该函数实现。
+对于上述四个函数，都可以加上=delete，加上之后就不允许实现该函数。也可以加到别的全局函数后，但是这样很奇怪，只是不允许实现该函数，但是全局函数不想实现的话，不写就好了。
+
+## C++的Alias别名
+- Alias Template模板别名
+```C++
+template <typename T>
+using Vec = std::vector<T, MyAlloc<T>>;
+//以后创建对象就可以这样简单的写。这是宏和typedef无法满足的
+Vec<int> coll;
+//补充一点，这样的话，无法对模板特化或者偏特化
+```
+- Alias Type类型别名
+例如：
+```C++
+//C语言的typedef,func是一个函数指针
+typedef void(*func)(int ,int);
+//C++新的语法
+using func = void (*)(int, int);
+```
+两者都是一样的。
+
+## C++的noexcept
+noexcept意为没有异常no exception;该关键字写在函数的()后面，声明这个函数不会抛出异常。
+注：
+一般在移动构造和移动赋值函数后面，加上noexcept，会告诉C++当容器在grows(成长)的时候才能放心调用移动语义。
+当然成长的容器，大概只有vector会成长。
+**异常exception是一个非常大的话题，后期再补充**
+
+## C++的decltype关键字
+decltype 会返回一个表达式的类型，可以用来：
+1. 用来声明一个返回类型
+```C++
+//下面的add 函数输入两个模板，返回类型不知道，所以可以让编译器帮我们自动推导
+template<class T1, typename T2>
+decltype(x+y) add(T1 x, T2 y);
+//上述的代码，只是为了让编译器通过，但是实际上编译器通过不了上述代码
+//因为decltype(x+y)这一步，还不知道x和y是什么，所以C++加入了返回类型后置
+auto add(T1 x, T2 y) -> decltype(x+y)
+```
+2. 元编程
+这里比较复杂，简单来说，就是在模板编程中，可能会不知道某个class的类型，所以需要用decltype
+```C++
+map<string, float>::value_type elem1;
+//这里实际上就是通过coll拿到了其类型
+map<string, float> coll;
+decltype(coll)::value_type elem2;
+```
+
+3. 传入一个lambda类型
+```C++
+auto cmp = [](const Person&p1, const Person&p2){
+    return p1.lastname() < p2.lastname();
+};
+//在声明set的时候，我们要传入一个cmp，cmp是一个lambda表达式，我们不知道他的类型是什么，所以用decltype关键字，让编译器帮我们推导
+std::set<Person, decltype(cmp)>coll(cmp);
+```
+
+## C++的labmda函数
+C++引入了labmdas，允许我们定义inline函数，它是一个被当做一个参数或者local object；（可以与标准库联动，类似于仿函数）
+labmdas的格式：`[...](...)mutable throw->return type(){}`
+```C++
+auto l = [](){
+    cout << "hello world!\n";
+};
+```
+上述的`mutable` `throw` 和`return type`可以不写，但是一旦写了一个必须写();
+下面对各个部分进行解释
+- []可以加入外部变量，至于是pass by value是直接传递变量，pass by refence在变量前加`&`即可。如下：
+```C++
+int id = 0;
+auto f = [id]()mutable{
+    cout << "id :" <<  '\n';
+    ++id;
+}
+//mutable的意思是，变量是可变的。如果不加mutable，id是不可以改变的，编译器会报错。
+```
+如果在[]里面加入=会把当前labmda表达式的所有对象以值传递的形式传进入，但是其实这很奇怪，最好还是需要什么就写什么吧，不要写个=，看起来比较奇怪。
+具体的值传递和引用传递，见labmda.cpp
+- ()里面可以加入传入的函数参数，这个参数和函数的参数是一样的，值传递或者引用传递都可以。
+- throw是抛出异常，这和普通函数是一样的
+- ->return type返回值，这里把返回值后置了，因为labmda表达式比较特殊，所以才这样
+
+## C++的可变模板 variadic template
+可变模板，变得是参数的个数和参数类型
+参数个数变化：利用参数个数逐一递减的特性，实现递归函数调用，完成函数模板调用
+参数类型变化：利用参数个数逐一递减后，会导致参数类型也逐一递减，直到完成class 模板调用
+```C++
+void func(){}
+//注意下方的格式，...省略的位置有三个，三个各不相同，这就是语法规定，没法说明。
+//需要多写，才能记住，所以会有专门一个cpp文件来练习可变模板的书写
+template <typename T, typename... Types>
+void func(const T&firstArg, const Type&... args)
+{
+    //处理第一个参数
+    ...
+    func(args...)
+}
+```
+
+具体例子，见variadicTemplate.cpp文件，里面有几个简单的例子来说明，怎么使用可变模板。
+
 
 

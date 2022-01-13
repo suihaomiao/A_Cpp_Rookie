@@ -4,12 +4,16 @@ using namespace std;
 
 #define LOG(x) cout << x << endl
 
-void Increment1(int value){value++;}
-void Increment2(int* value){ (*value)++; }
-void Increment3(int& value){value++;}
+void Increment1(int value)
+{
+    value++;
+}
+void Increment2(int *value) { (*value)++; }
+void Increment3(int &value) { value++; }
 
-int main(){
-    //Increment让传入的value+1；上述一共三个，分别是值传递，指针传递和引用传递
+int main()
+{
+    // Increment让传入的value+1；上述一共三个，分别是值传递，指针传递和引用传递
     int value1 = 5;
     int value2 = 5;
     int value3 = 5;

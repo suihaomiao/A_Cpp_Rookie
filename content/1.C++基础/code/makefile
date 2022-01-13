@@ -1,4 +1,4 @@
-all: ptr ref enum complex mystring Cdocument fraction print new memory_using
+all: ptr ref enum complex mystring Cdocument fraction print new memory_using Screen airplane embedded labmda variadicTemplate
 
 ptr:ptr.cpp
 	g++ -o ptr.out ptr.cpp
@@ -29,3 +29,17 @@ new: new.cpp
 
 memory_using: memory_using.cpp
 	g++ -o memory_using.out memory_using.cpp
+
+Screen: Screen.cpp
+	g++ -o Screen.out Screen.cpp
+
+airplane: airplane.cpp
+	g++ -o airplane.out airplane.cpp
+
+embedded: embedded.cpp
+	g++ -o embedded.out embedded.cpp
+labmda: labmda.cpp
+	g++ -o labmda.out labmda.cpp
+
+variadicTemplate:variadicTemplate.cpp
+	g++ -o variadicTemplate.out variadicTemplate.cpp

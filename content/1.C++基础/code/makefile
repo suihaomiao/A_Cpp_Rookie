@@ -1,5 +1,4 @@
-all: ptr ref enum complex mystring Cdocument fraction print new memory_using Screen airplane embedded labmda variadicTemplate
-
+all: ptr ref enum complex mystring Cdocument fraction print new memory_using Screen airplane embedded labmda variadicTemplate move test_hash
 ptr:ptr.cpp
 	g++ -o ptr.out ptr.cpp
 
@@ -43,3 +42,12 @@ labmda: labmda.cpp
 
 variadicTemplate:variadicTemplate.cpp
 	g++ -o variadicTemplate.out variadicTemplate.cpp
+
+move: move.cpp
+	g++ -o move.out move.cpp
+
+test_hash:test_hash.cpp
+	g++ -o test_hash.out test_hash.cpp
+
+clean:
+	rm -f ptr ref enum complex mystring Cdocument fraction print new memory_using Screen airplane embedded labmda variadicTemplate move

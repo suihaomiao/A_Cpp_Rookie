@@ -456,7 +456,7 @@ decltype(x+y) add(T1 x, T2 y);
 //因为decltype(x+y)这一步，还不知道x和y是什么，所以C++加入了返回类型后置
 auto add(T1 x, T2 y) -> decltype(x+y)
 ```
-2. 元编程
+2. 元编程使用
 这里比较复杂，简单来说，就是在模板编程中，可能会不知道某个class的类型，所以需要用decltype
 ```C++
 map<string, float>::value_type elem1;
@@ -584,3 +584,68 @@ Mystring Mystring::Mystring(const Mystring&& str);  //  移动构造函数，用
 
 ### 实现移动语义和完美转发
 实现一个带移动语义的类，见move.cpp
+
+
+## C++模板
+模板分为，类模板，函数模板，成员模板
+
+### C++的泛化与特化
+C++的模板编程是一种泛化的概念，即接受各种类型，做相同的处理。这样很好，但是在实际生活中有遇到，某种特殊类型，有更好的处理方式，C++针对这种情况提供了一个叫做特化的概念
+```C++
+//标准库中有个叫萃取机的东西(traits),它可以把放进去的类型进行分类
+//这是一个泛化版本，它将传入的类型都命名为type，然后进行处理
+template<class type>
+struct __type_traits{
+    //....具体代码
+}
+//int 特化
+template<> 
+struct __type_traists<int>{
+    //...具体代码
+}
+//double 特化
+template<> 
+struct __type_traists<double>{
+    //...具体代码
+}
+
+//如果传入的string，会调用泛化版本
+__type_traits<string>::xxx;
+//如果传入的int，会调用特化版本
+__type_traits<int>::xxx;
+```
+上述的特化很好理解，关键在于**模板特化的语法**：
+1. `template<>`,template中括号的东西是没有的，因为我们要特化！
+2. 在class名称需要加上`<>`指定特化的类型。
+
+### C++的偏特化
+基于特化的概念，衍生出的偏特化；上面讲到的特化也叫全特化，即模板类型，全部特化（指定）。还有一种概念叫做偏特化
+即，局部特化。偏特化的有两种类型，一个是数量偏特化，一个是类型偏特化。
+```C++
+//数量偏特化，即在有多个模板类型时，特化（指定）部分类型
+//标准库的vector，泛化版本接受两个模板，一个是数据类型T，一个是分配器Alloc
+template<class T, class Alloc = alloc>
+class vector{
+    //...具体代码
+};
+//数量偏特化版本，其中数据类型T特化（指定）为bool，所以在template部分不需要写出class T
+//特化的格式，都需要在class名称后加上名称
+template<class Alloc = alloc>
+class vector<bool, Alloc>{
+    //...具体代码
+}
+
+//类型偏特化，即在泛化的模板类型上，指定类型。这个和上面的指定类型有点像，但是不太一样，具体看例子，不太好用文字描述
+template<class Iterator>
+struct iterator_traits{
+    //泛化的版本
+    //...具体代码
+}
+//类型偏特化
+template<class T>
+struct iterator_traits<T*>{
+    //接受一个指针，指向谁无所谓
+    //指定类型了嘛？好像也没有，但是比上面的泛化版本，接受的范围窄了，所以特化了，这就是类型偏特化
+    //语法格式，因为指针的类型还是没有确定，所以template还是得写东西（class T*），但是因为特化了，所以class后面还是需要写<>
+}
+```

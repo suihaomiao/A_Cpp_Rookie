@@ -1,6 +1,10 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <queue>
+#include <vector>
+
+std::priority_queue<int, std::vector<int>, std::less<int>> record;
 
 using std::cout;
 
